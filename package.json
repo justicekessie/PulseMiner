@@ -1,0 +1,31 @@
+{
+  "name": "pulseminer",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Ethical AI-powered public sentiment observatory — Ghana pilot",
+  "scripts": {
+    "dev": "turbo run dev --parallel",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "type-check": "turbo run type-check",
+    "ingest": "pnpm --filter @pulseminer/ingestion run ingest",
+    "process": "pnpm --filter @pulseminer/processing run start",
+    "fuse": "pnpm --filter @pulseminer/fusion run fuse",
+    "seed": "pnpm --filter @pulseminer/database run seed",
+    "db:push": "pnpm --filter @pulseminer/database run db:push",
+    "db:migrate": "pnpm --filter @pulseminer/database run db:migrate",
+    "api": "pnpm --filter @pulseminer/api run dev",
+    "web": "pnpm --filter @pulseminer/web run dev"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.0",
+    "typescript": "^5.4.0",
+    "@types/node": "^20.0.0",
+    "prettier": "^3.2.0"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "packageManager": "pnpm@9.7.0"
+}

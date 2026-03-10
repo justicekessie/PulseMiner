@@ -1,0 +1,254 @@
+// This is the PulseMiner Prisma schema.
+// Run `pnpm db:push` to apply to a local Postgres instance.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum SourceType {
+  social_post
+  news_article
+  search_trend
+  widget_response
+  voice_submission
+  public_comment
+  synthetic
+}
+
+enum ConsentType {
+  public
+  first_party
+  synthetic
+}
+
+enum PrivacyLevel {
+  public
+  aggregated_only
+  anonymised
+}
+
+enum SentimentLabel {
+  positive
+  neutral
+  negative
+}
+
+enum EmotionLabel {
+  anger
+  fear
+  sadness
+  joy
+  trust
+  disgust
+  neutral
+}
+
+enum AnomalyType {
+  spike_concern
+  spike_negativity
+  sudden_salience
+  rapid_shift
+}
+
+enum AnomalySeverity {
+  low
+  medium
+  high
+}
+
+enum TrendDirection {
+  rising
+  falling
+  stable
+}
+
+// ─── Raw Ingestion Layer ─────────────────────────────────────────────────────
+
+model SourceEvent {
+  id             String       @id @default(cuid())
+  source_type    SourceType
+  source_name    String      // e.g. "twitter-gh", "myjoyonline", "widget"
+  text_content   String?     @db.Text
+  audio_path     String?
+  language       String?     @db.VarChar(10)
+  translated_text String?    @db.Text
+  timestamp      DateTime
+  region         String?     @db.VarChar(100)
+  country        String      @db.VarChar(10) @default("GH")
+  metadata       Json        @default("{}")
+  consent_type   ConsentType
+  privacy_level  PrivacyLevel
+  processed      Boolean     @default(false)
+  created_at     DateTime    @default(now())
+
+  processed_signal ProcessedSignal?
+
+  @@index([country, region])
+  @@index([source_type])
+  @@index([timestamp])
+  @@index([processed])
+}
+
+// ─── Processing / NLP Layer ──────────────────────────────────────────────────
+
+model ProcessedSignal {
+  id               String         @id @default(cuid())
+  source_event_id  String         @unique
+  source_event     SourceEvent    @relation(fields: [source_event_id], references: [id], onDelete: Cascade)
+
+  // Sentiment
+  sentiment_score  Float          // –1.0 → +1.0
+  sentiment_label  SentimentLabel
+  sentiment_conf   Float          // 0–1
+
+  // Emotion
+  dominant_emotion EmotionLabel
+  emotion_scores   Json           @default("{}")
+
+  // Topics
+  topic_labels     String[]       @default([])
+
+  // Scores
+  urgency_score    Float          @default(0)
+  spam_score       Float          @default(0)
+  confidence_score Float          @default(1)
+
+  // Language
+  detected_language String        @db.VarChar(10)
+
+  processed_at     DateTime       @default(now())
+
+  @@index([sentiment_label])
+  @@index([detected_language])
+  @@index([processed_at])
+}
+
+// ─── Signal Fusion Layer ─────────────────────────────────────────────────────
+
+model MoodIndex {
+  id                    String       @id @default(cuid())
+  region                String       @db.VarChar(100)
+  country               String       @db.VarChar(10) @default("GH")
+  date_bucket           DateTime     // truncated to day
+  topic                 String       @db.VarChar(100)
+
+  // Core indices (all –1 → +1 or 0 → 1)
+  sentiment_index       Float
+  concern_index         Float
+  optimism_index        Float
+  frustration_index     Float
+
+  issue_salience        Float
+
+  // Uncertainty bounds
+  uncertainty_lower     Float
+  uncertainty_upper     Float
+
+  contributing_sources  SourceType[]
+  signal_count          Int          @default(0)
+  anomaly_flag          Boolean      @default(false)
+  computed_at           DateTime     @default(now())
+
+  @@unique([region, date_bucket, topic])
+  @@index([country, region])
+  @@index([date_bucket])
+  @@index([topic])
+  @@index([anomaly_flag])
+}
+
+// ─── Widget Responses ────────────────────────────────────────────────────────
+
+model WidgetResponse {
+  id               String   @id @default(cuid())
+  session_id       String   @db.VarChar(100)  // client-generated anonymous ID
+  region           String?  @db.VarChar(100)
+  country          String   @db.VarChar(10) @default("GH")
+  mood_rating      Int      // 1–5
+  top_issue        String?  @db.VarChar(100)
+  open_text        String?  @db.Text
+  age_band         String?  @db.VarChar(10)
+  submitted_at     DateTime @default(now())
+
+  @@index([country, region])
+  @@index([submitted_at])
+}
+
+// ─── Voice Submissions ───────────────────────────────────────────────────────
+
+model VoiceSubmission {
+  id                       String   @id @default(cuid())
+  audio_path               String?  // stored in object storage — never raw audio in DB
+  audio_duration_seconds   Float?
+  consent_given            Boolean  @default(false)
+  region                   String?  @db.VarChar(100)
+  country                  String   @db.VarChar(10) @default("GH")
+  transcription            String?  @db.Text
+  detected_language        String?  @db.VarChar(10)
+  topic_labels             String[] @default([])
+  sentiment_score          Float?
+  sentiment_label          SentimentLabel?
+  submitted_at             DateTime @default(now())
+  processed_at             DateTime?
+
+  @@index([country, region])
+  @@index([submitted_at])
+}
+
+// ─── Anomaly Alerts ──────────────────────────────────────────────────────────
+
+model AnomalyAlert {
+  id                   String          @id @default(cuid())
+  detected_at          DateTime        @default(now())
+  region               String?         @db.VarChar(100)
+  country              String          @db.VarChar(10) @default("GH")
+  topic                String?         @db.VarChar(100)
+  alert_type           AnomalyType
+  severity             AnomalySeverity
+  description          String          @db.Text
+  signal_count_change  Float
+  baseline_value       Float
+  observed_value       Float
+  resolved             Boolean         @default(false)
+
+  @@index([country, region])
+  @@index([detected_at])
+  @@index([severity])
+}
+
+// ─── Weekly Reports ──────────────────────────────────────────────────────────
+
+model WeeklyReport {
+  id                 String   @id @default(cuid())
+  week_label         String   @db.VarChar(20) // e.g. "2026-W10"
+  country            String   @db.VarChar(10) @default("GH")
+  report_json        Json     // serialised WeeklyReport shape
+  generated_at       DateTime @default(now())
+
+  @@unique([week_label, country])
+}
+
+// ─── Topic Trend Snapshots (materialised daily) ───────────────────────────────
+
+model TopicTrendSnapshot {
+  id            String         @id @default(cuid())
+  date_bucket   DateTime
+  country       String         @db.VarChar(10) @default("GH")
+  region        String?        @db.VarChar(100)
+  topic         String         @db.VarChar(100)
+  salience      Float
+  sentiment     Float
+  trend         TrendDirection
+  trend_delta   Float
+  signal_count  Int
+
+  @@unique([date_bucket, country, topic, region])
+  @@index([date_bucket])
+  @@index([topic])
+}

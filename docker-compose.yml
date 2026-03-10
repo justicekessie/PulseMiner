@@ -1,0 +1,127 @@
+services:
+  # ─── Infrastructure ────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: pulseminer
+      POSTGRES_PASSWORD: pulseminer
+      POSTGRES_DB: pulseminer
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pulseminer"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ─── NLP Processing Service (Python) ──────────────────────────────────────
+  processing:
+    build:
+      context: ./services/processing
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      PROCESSING_PORT: 8000
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── API Service ───────────────────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: ./services/api/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      DATABASE_URL: postgresql://pulseminer:pulseminer@postgres:5432/pulseminer
+      REDIS_URL: redis://redis:6379
+      PROCESSING_SERVICE_URL: http://processing:8000
+      API_PORT: 3001
+      NODE_ENV: production
+      PILOT_COUNTRY: GH
+      PILOT_LABEL: Ghana
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  # ─── Web Dashboard ─────────────────────────────────────────────────────────
+  web:
+    build:
+      context: .
+      dockerfile: ./apps/web/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:3001
+      NODE_ENV: production
+    depends_on:
+      - api
+
+  # ─── Ingestion Worker (one-shot, then exits) ──────────────────────────────
+  ingestion:
+    build:
+      context: .
+      dockerfile: ./services/ingestion/Dockerfile
+    environment:
+      DATABASE_URL: postgresql://pulseminer:pulseminer@postgres:5432/pulseminer
+      PROCESSING_SERVICE_URL: http://processing:8000
+      INGESTION_LOOP: "false"
+      NODE_ENV: production
+      PILOT_COUNTRY: GH
+    depends_on:
+      postgres:
+        condition: service_healthy
+      processing:
+        condition: service_healthy
+    profiles:
+      - ingest
+
+  # ─── Fusion Worker (one-shot) ─────────────────────────────────────────────
+  fusion:
+    build:
+      context: .
+      dockerfile: ./services/fusion/Dockerfile
+    environment:
+      DATABASE_URL: postgresql://pulseminer:pulseminer@postgres:5432/pulseminer
+      NODE_ENV: production
+      PILOT_COUNTRY: GH
+    depends_on:
+      postgres:
+        condition: service_healthy
+    profiles:
+      - fuse
+
+volumes:
+  postgres_data:
+
+networks:
+  default:
+    name: pulseminer_network
