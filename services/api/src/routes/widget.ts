@@ -1,8 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { prisma } from '@pulseminer/database';
-import { randomUUID } from 'crypto';
-
 const WidgetResponseSchema = z.object({
   session_id: z.string().min(8).max(64),
   region: z.string().optional(),
