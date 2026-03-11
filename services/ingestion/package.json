@@ -8,6 +8,8 @@
     "ingest:synthetic": "tsx src/collectors/synthetic.ts",
     "ingest:news": "tsx src/collectors/news.ts",
     "ingest:ghana-news": "tsx src/collectors/ghana-news-runner.ts",
+    "ingest:youtube": "tsx src/collectors/youtube-runner.ts",
+    "ingest:facebook": "tsx src/collectors/facebook-runner.ts",
     "dev": "tsx watch src/index.ts",
     "type-check": "tsc --noEmit"
   },
