@@ -7,13 +7,15 @@
     "ingest": "tsx src/index.ts",
     "ingest:synthetic": "tsx src/collectors/synthetic.ts",
     "ingest:news": "tsx src/collectors/news.ts",
+    "ingest:ghana-news": "tsx src/collectors/ghana-news-runner.ts",
     "dev": "tsx watch src/index.ts",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@pulseminer/database": "workspace:*",
     "@pulseminer/shared": "workspace:*",
-    "node-fetch": "^3.3.2"
+    "node-fetch": "^3.3.2",
+    "rss-parser": "^3.13.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
