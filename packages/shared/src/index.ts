@@ -1,2 +1,2 @@
-export * from './types.js';
-export * from './constants/ghana.js';
+export * from './types';
+export * from './constants/ghana';
