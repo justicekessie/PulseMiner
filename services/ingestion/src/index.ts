@@ -9,6 +9,8 @@ import { prisma } from '@pulseminer/database';
 import { runSyntheticCollector } from './collectors/synthetic.js';
 import { runNewsCollector } from './collectors/news.js';
 import { runGhanaNewsCollector } from './collectors/ghana-news.js';
+import { runYouTubeCollector } from './collectors/youtube.js';
+import { runFacebookCollector } from './collectors/facebook.js';
 
 const INTERVAL_MS = Number(process.env.INGESTION_INTERVAL_MS ?? 300_000); // 5 min default
 
@@ -16,14 +18,16 @@ async function runIngestionCycle() {
   console.log(`[ingestion] Starting cycle at ${new Date().toISOString()}`);
 
   try {
-    const [syntheticCount, newsCount, ghanaNewsCount] = await Promise.all([
+    const [syntheticCount, newsCount, ghanaNewsCount, youtubeCount, facebookCount] = await Promise.all([
       runSyntheticCollector(),
       runNewsCollector(),
       runGhanaNewsCollector(),
+      runYouTubeCollector(),
+      runFacebookCollector(),
     ]);
 
     console.log(
-      `[ingestion] Cycle complete — synthetic: ${syntheticCount}, news: ${newsCount}, ghana-portals: ${ghanaNewsCount} events ingested`
+      `[ingestion] Cycle complete — synthetic: ${syntheticCount}, news: ${newsCount}, ghana-portals: ${ghanaNewsCount}, youtube: ${youtubeCount}, facebook: ${facebookCount} events ingested`
     );
   } catch (err) {
     console.error('[ingestion] Cycle error:', err);
