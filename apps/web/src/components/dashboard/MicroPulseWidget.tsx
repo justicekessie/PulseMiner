@@ -124,7 +124,7 @@ export function MicroPulseWidget() {
           <div className="text-3xl">🙏</div>
           <p className="text-sm font-medium text-emerald-400">Thank you!</p>
           <p className="text-xs text-slate-400">
-            Your anonymous response contributes to Ghana's civic intelligence map.
+            Your anonymous response contributes to Ghana&apos;s civic intelligence map.
           </p>
           <button
             onClick={() => { setStep('idle'); setRating(null); setIssue(''); setRegion(''); }}
