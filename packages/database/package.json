@@ -20,5 +20,8 @@
     "tsup": "^8.0.0",
     "typescript": "^5.4.0",
     "ts-node": "^10.9.0"
+  },
+  "prisma": {
+    "schema": "prisma/schema.prisma"
   }
 }
