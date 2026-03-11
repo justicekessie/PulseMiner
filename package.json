@@ -2,10 +2,10 @@
   "name": "pulseminer",
   "version": "0.1.0",
   "private": true,
-  "description": "Ethical AI-powered public sentiment observatory — Ghana pilot",
+  "description": "Ethical AI-powered public sentiment observatory \u2014 Ghana pilot",
   "scripts": {
     "dev": "turbo run dev --parallel",
-    "build": "turbo run build",
+    "build": "turbo run build --filter=@pulseminer/web",
     "lint": "turbo run lint",
     "type-check": "turbo run type-check",
     "ingest": "pnpm --filter @pulseminer/ingestion run ingest",
@@ -24,8 +24,11 @@
     "prettier": "^3.2.0"
   },
   "engines": {
-    "node": "22.x",
+    "node": "24.x",
     "pnpm": ">=9.0.0"
   },
-  "packageManager": "pnpm@9.7.0"
+  "packageManager": "pnpm@9.7.0",
+  "prisma": {
+    "schema": "packages/database/prisma/schema.prisma"
+  }
 }
