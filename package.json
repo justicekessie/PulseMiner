@@ -2,7 +2,7 @@
   "name": "pulseminer",
   "version": "0.1.0",
   "private": true,
-  "description": "Ethical AI-powered public sentiment observatory — Ghana pilot",
+  "description": "Ethical AI-powered public sentiment observatory \u2014 Ghana pilot",
   "scripts": {
     "dev": "turbo run dev --parallel",
     "build": "turbo run build",
@@ -27,5 +27,8 @@
     "node": "22.x",
     "pnpm": ">=9.0.0"
   },
-  "packageManager": "pnpm@9.7.0"
+  "packageManager": "pnpm@9.7.0",
+  "prisma": {
+    "schema": "packages/database/prisma/schema.prisma"
+  }
 }
