@@ -10,6 +10,7 @@
     "ingest:ghana-news": "tsx src/collectors/ghana-news-runner.ts",
     "ingest:youtube": "tsx src/collectors/youtube-runner.ts",
     "ingest:facebook": "tsx src/collectors/facebook-runner.ts",
+    "process-events": "tsx src/process-bridge.ts",
     "dev": "tsx watch src/index.ts",
     "type-check": "tsc --noEmit"
   },

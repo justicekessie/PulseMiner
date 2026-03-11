@@ -11,6 +11,7 @@ import { topicsRoutes } from './routes/topics.js';
 import { widgetRoutes } from './routes/widget.js';
 import { reportsRoutes } from './routes/reports.js';
 import { anomalyRoutes } from './routes/anomalies.js';
+import { statsRoutes } from './routes/stats.js';
 
 const PORT = Number(process.env.API_PORT ?? 3001);
 
@@ -47,6 +48,7 @@ await app.register(swagger, {
       { name: 'widget', description: 'Micro-pulse widget endpoints' },
       { name: 'reports', description: 'Weekly narrative reports' },
       { name: 'anomalies', description: 'Anomaly detection alerts' },
+      { name: 'stats', description: 'Pipeline statistics' },
     ],
   },
 });
@@ -61,6 +63,7 @@ await app.register(topicsRoutes, { prefix: '/api' });
 await app.register(widgetRoutes, { prefix: '/api/widget' });
 await app.register(reportsRoutes, { prefix: '/api/reports' });
 await app.register(anomalyRoutes, { prefix: '/api' });
+await app.register(statsRoutes, { prefix: '/api' });
 
 try {
   await app.listen({ port: PORT, host: '0.0.0.0' });
