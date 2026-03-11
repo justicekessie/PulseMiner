@@ -72,7 +72,7 @@ export function NationalMoodGauge({ mood }: Props) {
 
           {/* Labels */}
           <text x="18" y={cy + 20} fill="#64748b" fontSize="10" textAnchor="middle">–</text>
-          <text x="cx" y="20" fill="#64748b" fontSize="10" textAnchor="middle">0</text>
+          <text x={cx} y="20" fill="#64748b" fontSize="10" textAnchor="middle">0</text>
           <text x="198" y={cy + 20} fill="#64748b" fontSize="10" textAnchor="middle">+</text>
         </svg>
       </div>
